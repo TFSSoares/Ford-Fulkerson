@@ -3,7 +3,7 @@
 #include <string.h>
 
 int getNumberOfVertices();
-void buildGraph(int vertices, int graph[vertices][vertices]);
+void buildGraph(int vertices, int graph[vertices][vertices], int **source, int **sink);
 int *splitToIntArray(char str[], int *size);
 void fillMatrixWithZero(int vertices, int graph[vertices][vertices]);
 void showMatrix(int vertices, int graph[vertices][vertices]);
@@ -13,11 +13,14 @@ int main()
     int vertices = getNumberOfVertices();
     int graph[vertices][vertices];
 
+    int *source;
+    int *sink;
+
     fillMatrixWithZero(vertices, graph);
-    buildGraph(vertices, graph);
+    buildGraph(vertices, graph, &source, &sink);
 
-    showMatrix(vertices, graph);
-
+    //showMatrix(vertices, graph);
+    printf("%d", sizeof(source));
     return 1;
 }
 
@@ -50,7 +53,8 @@ void fillMatrixWithZero(int vertices, int graph[vertices][vertices])
     }
 }
 
-void buildGraph(int vertices, int graph[vertices][vertices])
+void buildGraph(int vertices, int graph[vertices][vertices], int **source, int **sink)
+
 {
     FILE *arquivo = fopen("grafo.txt", "r");
 
@@ -67,7 +71,11 @@ void buildGraph(int vertices, int graph[vertices][vertices])
 
     while (fgets(linha, sizeof(linha), arquivo) != NULL)
     {
-        if (controller >= 5)
+        if (controller == 3)
+           *source = splitToIntArray(linha, &size);
+        else if(controller == 4)
+            *sink = splitToIntArray(linha, &size);
+        else if (controller >= 5)
         {
 
             int *arr = splitToIntArray(linha, &size);
@@ -96,7 +104,7 @@ int *splitToIntArray(char str[], int *size)
 
         token = strtok(NULL, " ");
     }
-
+   
     return arr;
 }
 

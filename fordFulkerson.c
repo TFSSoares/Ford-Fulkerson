@@ -1,7 +1,41 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#define V 6 // Número de vértices
+int V;
+
+void showVerticeMaxFlow(int graph[V][V], int residualGraph[V][V], int source, int sink)
+{
+    printf("\n\n-----------------------------------------------------\n");
+    printf("Valor passado por cada vertice  fonte: %d, escoadouro: %d\n", source, sink);
+
+    for (int i = 0; i < V; i++)
+    {
+        for (int j = 0; j < V; j++)
+        {
+            int fluxo = graph[i][j] - residualGraph[i][j];
+
+            if (fluxo > 0)
+            {
+                printf("%d -> %d : %d\n", i + 1, j + 1, fluxo);
+            }
+        }
+    }
+}
+
+void showResidualGraph(int V, int residualGraph[V][V])
+{
+    printf("\nGrafo residual\n");
+    for (int i = 0; i < V; i++)
+    {
+        for (int j = 0; j < V; j++)
+        {
+            printf("%d ", residualGraph[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
 
 // Função para encontrar caminho aumentante usando BFS
 int bfs(int residualGraph[V][V], int source, int sink, int parent[])
@@ -85,39 +119,146 @@ int fordFulkerson(int graph[V][V], int source, int sink)
         maxFlow += pathFlow;
     }
 
+    showVerticeMaxFlow(graph, residualGraph, source + 1, sink + 1);
+    showResidualGraph(V, residualGraph);
+
     return maxFlow;
 }
 
+int getNumberOfVertices()
+{
+    FILE *arquivo = fopen("grafo.txt", "r");
 
-int main() {
+    if (arquivo == NULL)
+    {
+        printf("Erro ao abrir arquivo\n");
+        return 0;
+    }
 
-    /*
-        Exemplo de grafo:
+    char linha[100];
 
-              16      13
-         (0) ---> (1) ---> (2)
-          |         |       |
-        10|       12|     14|
-          v         v       v
-         (3) <--- (4) <--- (5)
-             9       7
-    */
+    fgets(linha, sizeof(linha), arquivo);
 
-    int graph[V][V] = {
-        {0, 16, 13, 0, 0, 0},
-        {0, 0, 10, 12, 0, 0},
-        {0, 4, 0, 0, 14, 0},
-        {0, 0, 9, 0, 0, 20},
-        {0, 0, 0, 7, 0, 4},
-        {0, 0, 0, 0, 0, 0}
-    };
+    fclose(arquivo);
+    return atoi(linha);
+}
 
-    int source = 0;
-    int sink = 5;
+void fillMatrixWithZero(int vertices, int graph[vertices][vertices])
+{
+    for (int i = 0; i < vertices; i++)
+    {
+        for (int j = 0; j < vertices; j++)
+        {
+            graph[i][j] = 0;
+        }
+    }
+}
 
-    int maxFlow = fordFulkerson(graph, source, sink);
+int *splitToIntArray(char str[], int *size)
+{
+    int *arr = malloc(100 * sizeof(int));
 
-    printf("Fluxo máximo = %d\n", maxFlow);
+    *size = 0;
+
+    char *token = strtok(str, " ");
+
+    while (token != NULL)
+    {
+        arr[*size] = atoi(token);
+
+        (*size)++;
+
+        token = strtok(NULL, " ");
+    }
+
+    return arr;
+}
+
+void buildGraph(int vertices, int graph[vertices][vertices], int **source, int **sink)
+
+{
+    FILE *arquivo = fopen("grafo.txt", "r");
+
+    if (arquivo == NULL)
+    {
+        printf("Erro ao abrir arquivo\n");
+        return;
+    }
+
+    char linha[100];
+
+    int size;
+    int controller = 1;
+
+    while (fgets(linha, sizeof(linha), arquivo) != NULL)
+    {
+        if (controller == 3)
+            *source = splitToIntArray(linha, &size);
+        else if (controller == 4)
+            *sink = splitToIntArray(linha, &size);
+        else if (controller >= 5)
+        {
+
+            int *arr = splitToIntArray(linha, &size);
+            graph[arr[0] - 1][arr[1] - 1] = arr[2];
+        }
+
+        controller++;
+    }
+
+    fclose(arquivo);
+}
+
+void showMatrix(int vertices, int graph[vertices][vertices])
+{
+    for (int i = 0; i < vertices; i++)
+    {
+        for (int j = 0; j < vertices; j++)
+        {
+            printf("%d ", graph[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void getSourceSinkPair(int source[], int sink[])
+{
+    for (int i = 0; i < source[0]; i++)
+    {
+        for (int j = 0; j < sink[0]; j++)
+        {
+            printf("(%d, %d)\n", source[i + 1], sink[j + 1]);
+        }
+    }
+}
+
+int main()
+{
+    V = getNumberOfVertices();
+
+    int graph[V][V];
+
+    int *source;
+    int *sink;
+
+    fillMatrixWithZero(V, graph);
+    buildGraph(V, graph, &source, &sink);
+
+    printf("Grafo:\n");
+    showMatrix(V, graph);
+
+    printf("Pares fonte e escoadouro\n");
+    getSourceSinkPair(source, sink);
+
+    for (int i = 0; i < source[0]; i++)
+    {
+        for (int j = 0; j < sink[0]; j++)
+        {
+            int maxFlow = fordFulkerson(graph, source[i + 1] - 1, sink[j + 1] - 1);
+            printf("Fluxo maximo = %d\n", maxFlow);
+        }
+    }
 
     return 0;
 }
